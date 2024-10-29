@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cambiar Contraseña - INTEP</title>
+    <style>
+        /* Los mismos estilos que recuperar_contrasena.html */
+    </style>
+</head>
+<body>
+    <div class="form-container">
+        <img src="{{ url_for('static', filename='Logo_INTEP.png') }}" alt="Logo INTEP" class="logo">
+        <h1>Cambiar Contraseña</h1>
+        
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <form method="POST" action="{{ url_for('cambiar_contrasena') }}" onsubmit="return validarFormulario()">
+            <div class="input-group">
+                <label for="clave_actual">Contraseña actual:</label>
+                <input type="password" id="clave_actual" name="clave_actual" required>
+            </div>
+            
+            <div class="input-group">
+                <label for="nueva_clave">Nueva contraseña:</label>
+                <input type="password" id="nueva_clave" name="nueva_clave" required minlength="8">
+                <div class="hint">Mínimo 8 caracteres</div>
+            </div>
+            
+            <div class="input-group">
+                <label for="confirmar_clave">Confirmar nueva contraseña:</label>
+                <input type="password" id="confirmar_clave" name="confirmar_clave" required minlength="8">
+            </div>
+            
+            <button type="submit">Cambiar Contraseña</button>
+        </form>
+        
+        <div class="volver">
+            <a href="{{ url_for('index') }}">Volver al inicio</a>
+        </div>
+    </div>
+
+    <script>
+        function validarFormulario() {
+            var nuevaClave = document.getElementById('nueva_clave').value;
+            var confirmarClave = document.getElementById('confirmar_clave').value;
+            
+            if (nuevaClave !== confirmarClave) {
+                alert('Las contraseñas nuevas no coinciden');
+                return false;
+            }
+            
+            if (nuevaClave.length < 8) {
+                alert('La contraseña debe tener al menos 8 caracteres');
+                return false;
+            }
+            
+            return true;
+        }
+    </script>
+</body>
+</html>
+

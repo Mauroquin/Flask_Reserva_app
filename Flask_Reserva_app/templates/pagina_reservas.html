@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reserva de Sala de Cómputo INTEP Roldanillo</title>
+    <style>
+        :root {
+            --intep-blue: #081f3b;
+            --intep-gold: #FFD700;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f0f0f0;
+        }
+        .header {
+            background-color: var(--intep-blue);
+            color: white;
+            text-align: center;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+        }
+        .logo {
+            width: 150px;
+            height: auto;
+            margin-right: 20px;
+        }
+        .header h1 {
+            margin: 0;
+            flex-grow: 1;
+            font-size: 34px;
+            color: var(--intep-gold);
+        }
+        .content {
+            display: flex;
+            justify-content: space-between;
+            padding: 20px;
+        }
+        .form-container, .calendar-container {
+            background-color: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(93, 108, 240, 0.418);
+            padding: 20px; 
+        }
+        .form-container {
+            width: 35%;
+        }
+        .calendar-container {
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            overflow: hidden;
+            width: 100%;
+            max-width: 400px;
+            margin: 20px auto;
+        }
+        .calendar-header {
+            background-color: var(--intep-blue);
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+        }
+        .calendar-header h2 {
+            color: white;
+            margin: 0;
+            font-size: 1.2em;
+        }
+        .calendar-nav {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 20px;
+            cursor: pointer;
+            padding: 5px 10px;
+            transition: background-color 0.3s;
+        }
+        .calendar-nav:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: 5px;
+        }
+        .calendar-weekdays {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            background-color: #f0f0f0;
+            font-weight: bold;
+            text-align: center;
+        }
+        .calendar-weekdays div {
+            padding: 10px;
+        }
+        .calendar-days {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 1px;
+            background-color: #e0e0e0;
+        }
+        .calendar-day {
+            background-color: #fff;
+            padding: 10px;
+            text-align: center;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .calendar-day:hover {
+            background-color: #f0f0f0;
+        }
+        .calendar-day.selected {
+            background-color: var(--intep-gold);
+            color: var(--intep-blue);
+            font-weight: bold;
+        }
+        .calendar-day.today {
+            border: 2px solid var(--intep-blue);
+        }
+        .calendar-day.disabled {
+            color: #ccc;
+            cursor: not-allowed;
+        }
+        h1, h2 {
+            color: #003366;
+            margin-top: 0;
+        }
+        label {
+            display: block;
+            margin-top: 10px;
+            color: #003366;
+        }
+        select, button {
+            width: 100%;
+            padding: 10px;
+            margin-top: 5px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: var(--intep-blue);
+            color: white;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #004c99;
+        }
+        #calendar {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 5px;
+            margin-top: 20px;
+        }
+        .calendar-day {
+            padding: 10px;
+            text-align: center;
+            background-color: #f0f0f0;
+            cursor: pointer;
+        }
+        .calendar-day:hover {
+            background-color: #e0e0e0;
+        }
+        .calendar-day.selected {
+            background-color: var(--intep-blue);
+            color: white;
+        }
+        .calendar-day.today {
+            border: 2px solid var(--intep-gold);
+        }
+        #time-blocks {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-top: 20px;
+        }
+        .time-block {
+            padding: 10px;
+            text-align: center;
+            background-color: #f0f0f0;
+            cursor: pointer;
+        }
+        .time-block:hover {
+            background-color: #e0e0e0;
+        }
+        .time-block.selected {
+            background-color: var(--intep-blue);
+            color: white;
+        }
+        .time-block.unavailable {
+            background-color: #ffcccc;
+            cursor: not-allowed;
+        }
+        .user-actions {
+            text-align: right;
+            margin: 20px 0;
+        }
+        .user-actions a, .user-actions button {
+            margin-left: 10px;
+            color: #003366;
+            text-decoration: none;
+            background: none;
+            border: none;
+            cursor: pointer;
+        }
+        .user-actions a:hover, .user-actions button:hover {
+            text-decoration: underline;
+        }
+        #error-message {
+            color: red;
+            margin-top: 10px;
+        }
+        .btn {
+            display: inline-block;
+            padding: 10px 20px;
+            margin: 5px;
+            font-size: 16px;
+            font-weight: bold;
+            text-align: center;
+            text-decoration: none;
+            border-radius: 5px;
+            transition: background-color 0.3s, transform 0.1s;
+            cursor: pointer;
+            border: none;
+        }
+        .btn-primary {
+            background-color: var(--intep-blue);
+            color: white;
+        }
+        .btn-primary:hover {
+            background-color: #004c99;
+            transform: translateY(-2px);
+        }
+        .btn-primary:active {
+            transform: translateY(0);
+        }
+        .btn i {
+            margin-right: 5px;
+        }
+        /* Estilo especial para el botón "Mis Reservas" si lo deseas */
+        #mis-reservas {
+            background-color: var(--intep-gold);
+            color: var(--intep-blue);
+        }
+        #mis-reservas:hover {
+            background-color: #e6c200;
+        }
+        #availability-message {
+            margin-top: 10px;
+            font-weight: bold;
+            text-align: center;
+            padding: 10px;
+            border-radius: 5px;
+            background-color: #ffeeee;
+        }
+        .message-container {
+            width: 100%;
+            padding: 10px;
+            text-align: center;
+            font-weight: bold;
+            display: none;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .message-error {
+            background-color: #ffeeee;
+            color: #d8000c;
+            border: 1px solid #d8000c;
+        }
+
+        .message-info {
+            background-color: #e7f3fe;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        .reservation-system {
+            display: flex;
+            justify-content: space-between;
+            margin: 20px;
+        }
+
+        .calendar-container {
+            /* ... (estilos previos del calendario) ... */
+            flex: 1;
+            margin-right: 20px;
+        }
+
+        .time-blocks-container {
+            flex: 1;
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            padding: 20px;
+        }
+
+        .time-blocks {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .time-block {
+            background-color: #f0f0f0;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 10px;
+            text-align: center;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .time-block:hover {
+            background-color: #e0e0e0;
+        }
+
+        .time-block.selected {
+            background-color: var(--intep-gold);
+            color: var(--intep-blue);
+            font-weight: bold;
+        }
+
+        .time-block.unavailable {
+            background-color: #ffcccc;
+            color: #666;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <div class="header">
+        <img src="{{ url_for('static', filename='Logo_INTEP.png') }}" alt="Logo INTEP" class="logo">
+        <h1>Reserva de Sala de Cómputo INTEP Roldanillo</h1>
+    </div>
+    
+    <div id="message-container" class="message-container"></div>
+
+    <div class="user-actions">
+        <button id="mis-reservas" class="btn btn-primary">Mis Reservas</button>
+        <a href="{{ url_for('logout') }}" class="btn btn-primary"><i class="fas fa-sign-out-alt"></i> Cerrar Sesión</a>
+    </div>
+
+    <div class="content">
+        <div class="form-container">
+            <h1>Reserva de Sala</h1>
+            <form id="reservationForm">
+                <select id="resource_id" name="resource_id" required>
+                    {% for i in range(1, 9) %}
+                        <option value="{{ i }}">Sala {{ i }}</option>
+                    {% endfor %}
+                </select>
+                
+                <div id="selected-date-time"></div>
+                
+                <button type="submit" class="btn btn-primary"><i class="fas fa-calendar-plus"></i> Reservar</button>
+            </form>
+            <div id="error-message"></div>
+        </div>
+        
+        <div class="reservation-system">
+            <div class="calendar-container">
+                <div class="calendar-header">
+                    <button id="prev-month" class="calendar-nav">&lt;</button>
+                    <h2 id="calendar-month-year"></h2>
+                    <button id="next-month" class="calendar-nav">&gt;</button>
+                </div>
+                <div class="calendar-weekdays">
+                    <div>Dom</div><div>Lun</div><div>Mar</div><div>Mié</div>
+                    <div>Jue</div><div>Vie</div><div>Sáb</div>
+                </div>
+                <div id="calendar-days" class="calendar-days"></div>
+            </div>
+            <div class="time-blocks-container">
+                <h3>Bloques de Tiempo Disponibles</h3>
+                <div id="time-blocks" class="time-blocks"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const calendar = document.getElementById('calendar');
+        const timeBlocks = document.getElementById('time-blocks');
+        const selectedDateTime = document.getElementById('selected-date-time');
+        const errorMessage = document.getElementById('error-message');
+        const reservationForm = document.getElementById('reservationForm');
+        let selectedDate = null;
+        let selectedTime = null;
+        let currentDate = new Date();
+
+        function generateCalendar(year, month) {
+            const firstDay = new Date(year, month, 1);
+            const lastDay = new Date(year, month + 1, 0);
+            const daysInMonth = lastDay.getDate();
+            const startingDay = firstDay.getDay();
+
+            const calendarDays = document.getElementById('calendar-days');
+            const monthYearElement = document.getElementById('calendar-month-year');
+
+            calendarDays.innerHTML = '';
+            monthYearElement.textContent = `${firstDay.toLocaleString('es-ES', { month: 'long', year: 'numeric' })}`;
+
+            for (let i = 0; i < startingDay; i++) {
+                calendarDays.appendChild(document.createElement('div'));
+            }
+
+            for (let day = 1; day <= daysInMonth; day++) {
+                const dayElement = document.createElement('div');
+                dayElement.classList.add('calendar-day');
+                dayElement.textContent = day;
+
+                const date = new Date(year, month, day);
+                if (date < new Date().setHours(0,0,0,0)) {
+                    dayElement.classList.add('disabled');
+                } else {
+                    dayElement.addEventListener('click', () => selectDate(date));
+                }
+
+                if (day === new Date().getDate() && year === new Date().getFullYear() && month === new Date().getMonth()) {
+                    dayElement.classList.add('today');
+                }
+
+                calendarDays.appendChild(dayElement);
+            }
+        }
+
+        function selectDate(date) {
+            document.querySelectorAll('.calendar-day').forEach(day => day.classList.remove('selected'));
+            event.target.classList.add('selected');
+            selectedDate = date;
+            generateTimeBlocks();
+            checkAvailability();
+        }
+
+        document.getElementById('prev-month').addEventListener('click', () => {
+            currentDate.setMonth(currentDate.getMonth() - 1);
+            generateCalendar(currentDate.getFullYear(), currentDate.getMonth());
+        });
+
+        document.getElementById('next-month').addEventListener('click', () => {
+            currentDate.setMonth(currentDate.getMonth() + 1);
+            generateCalendar(currentDate.getFullYear(), currentDate.getMonth());
+        });
+
+        generateCalendar(currentDate.getFullYear(), currentDate.getMonth());
+
+        function generateTimeBlocks() {
+            const timeBlocks = document.getElementById('time-blocks');
+            timeBlocks.innerHTML = '';
+            const blocks = [
+                '07:00 - 09:00', '09:00 - 11:00', '11:00 - 13:00',
+                '14:00 - 16:00', '16:00 - 18:00', '18:00 - 20:00', '20:00 - 22:00'
+            ];
+            blocks.forEach(block => {
+                const blockElement = document.createElement('div');
+                blockElement.classList.add('time-block');
+                blockElement.textContent = block;
+                blockElement.addEventListener('click', () => selectTimeBlock(block));
+                timeBlocks.appendChild(blockElement);
+            });
+        }
+
+        function selectTimeBlock(block) {
+            document.querySelectorAll('.time-block').forEach(b => b.classList.remove('selected'));
+            event.target.classList.add('selected');
+            selectedTime = block;
+        }
+
+        function checkAvailability() {
+            if (!selectedDate) return;
+
+            const resourceId = document.getElementById('resource_id').value;
+            const date = selectedDate.toISOString().split('T')[0];
+
+            fetch('/check_availability', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ 
+                    resource_id: resourceId, 
+                    date: date,
+                    start_time: '',
+                    end_time: ''
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.querySelectorAll('.time-block').forEach(block => {
+                    const [blockStart, blockEnd] = block.textContent.split(' - ');
+                    if (data.unavailable_times.includes(blockStart)) {
+                        block.classList.add('unavailable');
+                    } else {
+                        block.classList.remove('unavailable');
+                    }
+                });
+
+                if (data.unavailable_times.length === 7) {
+                    showMessage('No hay bloques disponibles para esta fecha y sala.', 'error');
+                } else {
+                    hideMessage();
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showMessage('Ocurrió un error al verificar la disponibilidad', 'error');
+            });
+        }
+
+        function showMessage(message, type) {
+            const messageContainer = document.getElementById('message-container');
+            messageContainer.textContent = message;
+            messageContainer.className = `message-container message-${type}`;
+            messageContainer.style.display = 'block';
+        }
+
+        function hideMessage() {
+            document.getElementById('message-container').style.display = 'none';
+        }
+
+        reservationForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            if (!selectedDate || !selectedTime) {
+                errorMessage.textContent = 'Por favor, seleccione una fecha y hora';
+                return;
+            }
+            
+            const resourceId = document.getElementById('resource_id').value;
+            const date = selectedDate.toISOString().split('T')[0];
+            const [startTime, endTime] = selectedTime.split(' - ');
+
+            fetch('/reserve', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    resource_id: resourceId,
+                    date: date,
+                    start_time: startTime,
+                    end_time: endTime
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Limpiar el mensaje de error
+                    errorMessage.textContent = '';
+                    alert(data.message);
+                    // Resetear las selecciones
+                    selectedDate = null;
+                    selectedTime = null;
+                    // Limpiar las selecciones visuales
+                    document.querySelectorAll('.calendar-day').forEach(day => day.classList.remove('selected'));
+                    document.querySelectorAll('.time-block').forEach(block => block.classList.remove('selected'));
+                    generateTimeBlocks();
+                } else {
+                    errorMessage.textContent = data.message;
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                errorMessage.textContent = 'Ocurrió un error al realizar la reserva';
+            });
+        });
+
+        document.getElementById('mis-reservas').addEventListener('click', function(e) {
+            e.preventDefault(); // Previene cualquier acción por defecto
+            window.location.href = '/mis_reservas'; // Redirige a la página de Mis Reservas
+        });
+
+        document.getElementById('resource_id').addEventListener('change', checkAvailability);
+
+        generateCalendar(currentDate.getFullYear(), currentDate.getMonth());
+        generateTimeBlocks();
+    </script>
+</body>
+</html>

@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registro - INTEP</title>
+    <style>
+        body {
+            background-image: url("{{ url_for('static', filename='vista_frontal_intep.png') }}");
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 0;
+            font-family: Arial, sans-serif;
+        }
+        
+        .registro-container {
+            background-color: rgba(255, 255, 255, 0.95);
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.2);
+            width: 100%;
+            max-width: 400px;
+        }
+        
+        .logo {
+            width: 150px;
+            display: block;
+            margin: 0 auto 20px;
+        }
+        
+        h1 {
+            color: #003366;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        .input-group {
+            margin-bottom: 15px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: #003366;
+            font-weight: bold;
+        }
+        
+        input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+        
+        button {
+            width: 100%;
+            padding: 12px;
+            background-color: #003366;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        
+        button:hover {
+            background-color: #002244;
+        }
+        
+        .alert {
+            padding: 10px;
+            margin-bottom: 15px;
+            border-radius: 4px;
+        }
+        
+        .alert-error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .alert-success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .volver-login {
+            text-align: center;
+            margin-top: 15px;
+        }
+        
+        .volver-login a {
+            color: #003366;
+            text-decoration: none;
+        }
+        
+        .volver-login a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="registro-container">
+        <img src="{{ url_for('static', filename='Logo_INTEP.png') }}" alt="Logo INTEP" class="logo">
+        <h1>Registro de Docente</h1>
+        
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <form method="POST" action="{{ url_for('registrar_docente') }}" onsubmit="return validarFormulario()">
+            <div class="input-group">
+                <label for="nombre">Nombre Completo:</label>
+                <input type="text" id="nombre" name="nombre" required 
+                       pattern="[A-Za-záéíóúÁÉÍÓÚñÑ\s]+" 
+                       title="Solo se permiten letras y espacios"
+                       minlength="3">
+            </div>
+            
+            <div class="input-group">
+                <label for="correo">Correo Electrónico:</label>
+                <input type="email" id="correo" name="correo" 
+                       required 
+                       pattern=".+@intep\.edu\.co$" 
+                       title="Debe usar un correo institucional (@intep.edu.co)">
+                <small class="input-help">Ejemplo: nombre@intep.edu.co</small>
+            </div>
+            
+            <div class="input-group">
+                <label for="clave">Contraseña:</label>
+                <input type="password" id="clave" name="clave" 
+                       required minlength="8"
+                       pattern="(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{8,}" 
+                       title="Debe contener al menos 8 caracteres, incluyendo mayúsculas, minúsculas y números">
+                <small class="input-help">Mínimo 8 caracteres, debe incluir mayúsculas, minúsculas y números</small>
+            </div>
+            
+            <div class="input-group">
+                <label for="confirmar_clave">Confirmar Contraseña:</label>
+                <input type="password" id="confirmar_clave" 
+                       required minlength="8">
+            </div>
+            
+            <button type="submit">Registrarse</button>
+        </form>
+        
+        <div class="volver-login">
+            <a href="{{ url_for('login') }}">¿Ya tienes cuenta? Inicia sesión</a>
+        </div>
+    </div>
+
+    <script>
+function validarFormulario() {
+    const clave = document.getElementById('clave').value;
+    const confirmarClave = document.getElementById('confirmar_clave').value;
+    const correo = document.getElementById('correo').value;
+    
+    // Validar que las contraseñas coincidan
+    if (clave !== confirmarClave) {
+        alert('Las contraseñas no coinciden');
+        return false;
+    }
+    
+    // Validar longitud de contraseña
+    if (clave.length < 8) {
+        alert('La contraseña debe tener al menos 8 caracteres');
+        return false;
+    }
+    
+    // Validar complejidad de contraseña
+    const tieneNumero = /\d/.test(clave);
+    const tieneMayuscula = /[A-Z]/.test(clave);
+    const tieneMinuscula = /[a-z]/.test(clave);
+    
+    if (!tieneNumero || !tieneMayuscula || !tieneMinuscula) {
+        alert('La contraseña debe incluir al menos un número, una mayúscula y una minúscula');
+        return false;
+    }
+    
+    // Validar correo institucional
+    if (!correo.endsWith('@intep.edu.co')) {
+        alert('Debe usar un correo institucional (@intep.edu.co)');
+        return false;
+    }
+    
+    return true;
+}
+
+// Validación en tiempo real del correo
+document.getElementById('correo').addEventListener('input', function(e) {
+    const correo = e.target.value;
+    if (!correo.endsWith('@intep.edu.co')) {
+        e.target.setCustomValidity('Debe usar un correo institucional (@intep.edu.co)');
+    } else {
+        e.target.setCustomValidity('');
+    }
+});
+
+// Validación en tiempo real de la contraseña
+document.getElementById('clave').addEventListener('input', function(e) {
+    const clave = e.target.value;
+    if (clave.length < 8) {
+        e.target.setCustomValidity('La contraseña debe tener al menos 8 caracteres');
+    } else if (!/\d/.test(clave)) {
+        e.target.setCustomValidity('La contraseña debe incluir al menos un número');
+    } else if (!/[A-Z]/.test(clave)) {
+        e.target.setCustomValidity('La contraseña debe incluir al menos una mayúscula');
+    } else if (!/[a-z]/.test(clave)) {
+        e.target.setCustomValidity('La contraseña debe incluir al menos una minúscula');
+    } else {
+        e.target.setCustomValidity('');
+    }
+});
+    </script>
+</body>
+</html>

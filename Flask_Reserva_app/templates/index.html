@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Reservas - INTEP</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f5f5f5;
+        }
+        
+        .navbar {
+            background-color: #003366;
+            padding: 1rem;
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .navbar img {
+            height: 40px;
+        }
+        
+        .navbar-links a {
+            color: white;
+            text-decoration: none;
+            margin-left: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+        
+        .reservation-form {
+            background-color: white;
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #003366;
+            font-weight: bold;
+        }
+        
+        select, input {
+            width: 100%;
+            padding: 0.5rem;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 1rem;
+        }
+        
+        .bloques-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+        
+        .bloque {
+            padding: 1rem;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            text-align: center;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        
+        .bloque:hover {
+            background-color: #e9ecef;
+        }
+        
+        .bloque.ocupado {
+            background-color: #dc3545;
+            color: white;
+            cursor: not-allowed;
+        }
+        
+        .alert {
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border-radius: 4px;
+        }
+        
+        .alert-success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .alert-error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        button {
+            background-color: #003366;
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+        
+        button:hover {
+            background-color: #004c99;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div>
+            <img src="{{ url_for('static', filename='Logo_INTEP.png') }}" alt="Logo INTEP">
+        </div>
+        <div class="navbar-links">
+            <a href="{{ url_for('index') }}">Inicio</a>
+            <a href="{{ url_for('mis_reservas') }}">Mis Reservas</a>
+            <a href="{{ url_for('logout') }}">Cerrar Sesión</a>
+        </div>
+    </nav>
+
+    <div class="container">
+        <h1>Reserva de Salas de Sistemas</h1>
+        
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <div class="reservation-form">
+            <form method="POST" id="reservaForm">
+                <div class="form-group">
+                    <label for="fecha">Fecha:</label>
+                    <input type="date" id="fecha" name="fecha" required min="{{ today }}"
+                           onchange="verificarDisponibilidad()">
+                </div>
+
+                <div class="form-group">
+                    <label for="sala">Sala:</label>
+                    <select id="sala" name="sala" required onchange="verificarDisponibilidad()">
+                        <option value="">Seleccione una sala</option>
+                        {% for i in range(1, 9) %}
+                            <option value="{{ i }}">Sala {{ i }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Bloques de Hora Disponibles:</label>
+                    <div id="mensaje-disponibilidad" class="alert alert-info" style="display: none;">
+                        <!-- Aquí se mostrará el mensaje de disponibilidad -->
+                    </div>
+                    <div class="bloques-grid" id="bloques-container">
+                        {% for bloque in bloques_horarios %}
+                            <div class="bloque" 
+                                 data-bloque="{{ bloque }}"
+                                 onclick="seleccionarBloque(this)">
+                                {{ bloque }}
+                            </div>
+                        {% endfor %}
+                    </div>
+                    <input type="hidden" id="bloque" name="bloque" required>
+                </div>
+
+                <button type="submit">Realizar Reserva</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Establecer fecha mínima como hoy
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('fecha').min = today;
+
+        // Función para verificar disponibilidad de bloques
+        function verificarDisponibilidad() {
+            const fecha = document.getElementById('fecha').value;
+            const sala = document.getElementById('sala').value;
+            const mensajeDiv = document.getElementById('mensaje-disponibilidad');
+            const bloquesContainer = document.getElementById('bloques-container');
+            
+            if (fecha && sala) {
+                fetch('/verificar_disponibilidad', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ fecha, sala })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    const bloques = document.querySelectorAll('.bloque');
+                    let bloquesDisponibles = 0;
+                    
+                    bloques.forEach(bloque => {
+                        if (data.bloques_ocupados.includes(bloque.dataset.bloque)) {
+                            bloque.classList.add('ocupado');
+                        } else {
+                            bloque.classList.remove('ocupado');
+                            bloquesDisponibles++;
+                        }
+                    });
+
+                    // Mostrar mensaje según disponibilidad
+                    if (bloquesDisponibles === 0) {
+                        mensajeDiv.innerHTML = `
+                            <strong>¡Sala no disponible!</strong><br>
+                            La sala ${sala} no tiene bloques disponibles para el día ${formatearFecha(fecha)}.
+                            Por favor, seleccione otra fecha u otra sala.
+                        `;
+                        mensajeDiv.className = 'alert alert-warning';
+                        mensajeDiv.style.display = 'block';
+                        bloquesContainer.style.opacity = '0.5';
+                    } else {
+                        mensajeDiv.innerHTML = `
+                            <strong>Sala disponible</strong><br>
+                            La sala ${sala} tiene ${bloquesDisponibles} bloques disponibles para el día ${formatearFecha(fecha)}.
+                        `;
+                        mensajeDiv.className = 'alert alert-success';
+                        mensajeDiv.style.display = 'block';
+                        bloquesContainer.style.opacity = '1';
+                    }
+                });
+            } else {
+                mensajeDiv.style.display = 'none';
+                bloquesContainer.style.opacity = '1';
+            }
+        }
+
+        // Función para formatear la fecha
+        function formatearFecha(fecha) {
+            const opciones = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            return new Date(fecha).toLocaleDateString('es-ES', opciones);
+        }
+
+        // Estilos CSS adicionales
+        const style = document.createElement('style');
+        style.textContent = `
+            .alert {
+                padding: 15px;
+                margin-bottom: 20px;
+                border: 1px solid transparent;
+                border-radius: 4px;
+            }
+            
+            .alert-warning {
+                color: #856404;
+                background-color: #fff3cd;
+                border-color: #ffeeba;
+            }
+            
+            .alert-success {
+                color: #155724;
+                background-color: #d4edda;
+                border-color: #c3e6cb;
+            }
+            
+            .alert-info {
+                color: #0c5460;
+                background-color: #d1ecf1;
+                border-color: #bee5eb;
+            }
+
+            .bloques-grid {
+                transition: opacity 0.3s ease;
+            }
+        `;
+        document.head.appendChild(style);
+
+        // Función para seleccionar un bloque
+        function seleccionarBloque(elemento) {
+            if (elemento.classList.contains('ocupado')) {
+                return;
+            }
+            
+            document.querySelectorAll('.bloque').forEach(b => {
+                b.style.backgroundColor = '';
+                b.style.color = '';
+            });
+            
+            elemento.style.backgroundColor = '#003366';
+            elemento.style.color = 'white';
+            document.getElementById('bloque').value = elemento.dataset.bloque;
+        }
+
+        // Validar formulario antes de enviar
+        document.getElementById('reservaForm').onsubmit = function(e) {
+            if (!document.getElementById('bloque').value) {
+                e.preventDefault();
+                alert('Por favor seleccione un bloque de hora');
+            }
+        };
+    </script>
+</body>
+</html>
